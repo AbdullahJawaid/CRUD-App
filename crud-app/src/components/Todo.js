@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 
 //image import
@@ -7,15 +7,41 @@ import todo from "../assets/images/todo.svg"
 
 //style
 import "./Todo.css"
+const getLocalData=() =>{
+  const list=localStorage.getItem("myTodoList");
+
+  if(list){
+    return JSON.parse(list);
+  }
+  else{
+    return [];
+  }
+}
 
 
 function Todo() {
   const [inputData, setInputData] = useState("");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(getLocalData());
+  const [isEditItems,setIsEditItems]=useState(" ");
+  const [toogleButton,setToogleButton]=useState(false);
 
   const handleAddItems = () => {
     if (!inputData) {
       alert("please enter a data")
+    }
+    else if (inputData && toogleButton) {
+      setItems(
+        items.map((curElem) => {
+          if (curElem.id === isEditItems) {
+            return { ...curElem, name: inputData };
+          }
+          return curElem;
+        })
+      );
+
+      setInputData("");
+      setIsEditItems(null);
+      setToogleButton(false);
     }
     else {
       const myNewInputData={
@@ -27,9 +53,18 @@ function Todo() {
     }
   }
 
+  const handleEditItem = (index) => {
+    const item_todo_edited = items.find((curElem) => {
+      return curElem.id === index;
+    });
+    setInputData(item_todo_edited.name);
+    setIsEditItems(index);
+    setToogleButton(true);
+  };
+
   const handleDeleteItem= (index) => {
-    const updatedItems=items.filter((currEleme) =>{
-      return currEleme.id !== index;
+    const updatedItems=items.find((currElem) =>{
+      return currElem.id !== index;
     });
     setItems(updatedItems)
 
@@ -38,6 +73,11 @@ function Todo() {
   const handleRemoveAll=()=>{
     setItems([ ]);
   }
+
+
+  useEffect(() =>{
+    localStorage.setItem("myTodoList",JSON.stringify(items))
+  },[items])
 
 
   return (
@@ -56,7 +96,18 @@ function Todo() {
               onChange={(e) => setInputData(e.target.value)}
               value={inputData}
             />
-            <i className="fa fa-plus add-btn" onClick={handleAddItems}></i>
+            {toogleButton ? (
+              
+              <i className="far fa-edit add-btn"
+              onClick={handleAddItems}>
+              </i>
+            ):
+            <i className="fa fa-plus add-btn" 
+            onClick={handleAddItems}>
+            </i>
+
+            }
+            
           </div>
 
           {/* {show our items} */}
@@ -64,12 +115,13 @@ function Todo() {
 
           <div className="showItems">
             {items.map((currElem) => {
-
               return (
                 <div className="eachItem" key={currElem.id}>
                   <h3>{currElem.name}</h3>
                   <div className="todo-btn">
-                    <i className="far fa-edit add-btn"></i>
+                    <i className="far fa-edit add-btn"
+                    onClick={()=> handleEditItem(currElem.id)}
+                    ></i>
                     <i className="far fa-trash-alt add-btn" onClick={() => handleDeleteItem(currElem.id)}></i>
                   </div>
                 </div>
